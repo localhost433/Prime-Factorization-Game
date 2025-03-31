@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Factorization Game</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --text-color: #000;
+            --switch-on-bg: #34c759;
+            --switch-off-bg: #d1d1d6;
+            --switch-thumb-bg: #fff;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #fff;
+            --switch-on-bg: #30d158;
+            --switch-off-bg: #505050;
+            --switch-thumb-bg: #1c1c1e;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        .side-buttons {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .switch-label {
+            font-size: 1.2rem;
+        }
+
+        .switch-toggle {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background-color: var(--switch-off-bg);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .switch-toggle::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background-color: var(--switch-thumb-bg);
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .switch-toggle.active {
+            background-color: var(--switch-on-bg);
+        }
+
+        .switch-toggle.active::before {
+            transform: translateX(22px);
+        }
+
+        .number-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .apple-button {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 0px;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: none;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s, transform 0.2s;
+        }
+
+        .apple-button:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-color: var(--switch-on-bg);
+            color: var(--switch-on-bg);
+        }
+
+        .apple-button:active {
+            transform: scale(0.95);
+        }
+
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+        }
+
+        #leaderboardList {
+            display: block;
+            position: flex;
+            width: 20%;
+            text-align: left;
+        }
+
+        #leaderboardItems {
+            list-style-type: none;
+            padding: 0;
+            font-size: 1rem;
+        }
+
+        #leaderboardItems li {
+            padding: 5px 0;
+        }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="side-buttons">
+        <div class="switch">
+            <div id="beginnerSwitch" class="switch-toggle"></div>
+            <label class="switch-label">Beginner</label>
+        </div>
+        <div class="switch">
+            <div id="easySwitch" class="switch-toggle"></div>
+            <label class="switch-label">Easy</label>
+        </div>
+        <div class="switch">
+            <div id="mediumSwitch" class="switch-toggle"></div>
+            <label class="switch-label">Medium</label>
+        </div>
+        <div class="switch">
+            <div id="hardSwitch" class="switch-toggle"></div>
+            <label class="switch-label">Hard</label>
+        </div>
+        <div class="switch">
+            <div id="extremeSwitch" class="switch-toggle"></div>
+            <label class="switch-label">Extreme</label>
+        </div>
+        <div class="switch">
+            <div id="darkSwitch" class="switch-toggle"></div>
+            <label class="switch-label">Dark Mode</label>
+        </div>
+    </div>
+    <div class="game-container">
+        <div class="number-display" id="numberDisplay">56</div>
+        <input 
+            type="text" 
+            id="userInput" 
+            placeholder=""
+            style="
+                width: 80%;
+                padding: 12px;
+                font-size: 1.1rem;
+                border: 0px;
+                border-radius: 12px;
+                background-color: rgba(0, 0, 0, 0.05);
+                color: var(--text-color);
+                text-align: center;
+                outline: none;
+            "
+            onfocus="this.style.borderColor='var(--switch-on-bg)';"
+            onblur="this.style.borderColor='var(--text-color)'; this.style.boxShadow='none';"
+        />
+        <div class="feedback" id="feedback"></div>
+        <div class="leaderboard">
+            <p>Streak: <span id="streak">0</span></p>
+            <p>Best Streak: <span id="bestStreak">0</span></p>
+            <div id="leaderboardControls" style="margin-bottom: 10px;">
+                <button id="toggleLeaderboard" class="apple-button">Hide Leaderboard</button>
+                <button id="clearLeaderboard" class="apple-button" style="margin-left: 10px;">Clear Leaderboard</button>
+            </div>            
+            <div id="leaderboardList">
+                <h3>Leaderboard:</h3>
+                <ul id="leaderboardItems"></ul>
+            </div>
+        </div>        
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
