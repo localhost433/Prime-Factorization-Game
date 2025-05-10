@@ -1,0 +1,224 @@
+/* ===========================
+    Root Variables
+=========================== */
+:root {
+     --bg-color: #f4f4f9;
+     --text-color: #000;
+     --switch-on-bg: #34c759;
+     --switch-off-bg: #d1d1d6;
+     --switch-thumb-bg: #fff;
+}
+
+[data-theme="dark"] {
+     --bg-color: #121212;
+     --text-color: #fff;
+     --switch-on-bg: #30d158;
+     --switch-off-bg: #505050;
+     --switch-thumb-bg: #1c1c1e;
+}
+
+/* ===========================
+    Global Styles
+=========================== */
+body {
+     font-family: Arial, sans-serif;
+     background-color: var(--bg-color);
+     color: var(--text-color);
+     margin: 0;
+     display: flex;
+     height: 100vh;
+}
+
+/* ===========================
+    Layout Containers
+=========================== */
+.game-container {
+     flex: 1;
+     display: flex;
+     flex-direction: column;
+     justify-content: center;
+     align-items: center;
+     gap: 20px;
+     position: relative;
+}
+
+.side-buttons {
+     display: flex;
+     flex-direction: column;
+     justify-content: center;
+     gap: 20px;
+     padding: 20px;
+}
+
+/* ===========================
+    Leaderboard
+=========================== */
+#leaderboardList {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 20%;
+    min-width: 180px;
+
+    text-align: left;
+}
+
+@media (max-width: 540px) {
+    #leaderboardList {
+        flex: 1 0 100%;
+        min-width: 0;
+        margin-top: 1rem;
+    }
+}
+
+/* ===========================
+    Buttons
+=========================== */
+.button {
+     background-color: transparent;
+     color: var(--text-color);
+     border: 0px;
+     border-radius: 10px;
+     padding: 8px 16px;
+     font-size: 1rem;
+     cursor: pointer;
+     box-shadow: none;
+     transition: background-color 0.3s, border-color 0.3s, color 0.3s, transform 0.2s;
+}
+
+.button:hover {
+     background-color: rgba(0, 0, 0, 0.1);
+     border-color: var(--switch-on-bg);
+     color: var(--switch-on-bg);
+}
+
+.button:active {
+     transform: scale(0.95);
+}
+
+/* ===========================
+    Switch Toggle
+=========================== */
+.switch {
+     display: flex;
+     align-items: center;
+     gap: 10px;
+}
+
+.switch-label {
+     font-size: 1.2rem;
+}
+
+.switch-toggle {
+     position: relative;
+     width: 50px;
+     height: 28px;
+     background-color: var(--switch-off-bg);
+     border-radius: 14px;
+     cursor: pointer;
+     transition: background-color 0.3s;
+}
+
+.switch-toggle::before {
+     content: '';
+     position: absolute;
+     top: 2px;
+     left: 2px;
+     width: 24px;
+     height: 24px;
+     background-color: var(--switch-thumb-bg);
+     border-radius: 50%;
+     transition: transform 0.3s;
+}
+
+.switch-toggle.active {
+     background-color: var(--switch-on-bg);
+}
+
+.switch-toggle.active::before {
+     transform: translateX(22px);
+}
+
+/* ===========================
+    Number Display
+=========================== */
+.number-display {
+     font-size: 2.5rem;
+     font-weight: bold;
+}
+
+/* ===========================
+    Input Fields
+=========================== */
+input[type="text"] {
+     width: 80%;
+     padding: 10px;
+     font-size: 1.2rem;
+}
+
+/* ===========================
+    Modal
+=========================== */
+.modal {
+     position: fixed;
+     top: 0;
+     left: 0;
+     right: 0;
+     bottom: 0;
+     background: rgba(0, 0, 0, 0.6);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     z-index: 999;
+}
+
+.modal.hidden {
+     display: none;
+}
+
+.modal-content {
+     background: var(--bg-color);
+     color: var(--text-color);
+     padding: 20px;
+     border-radius: 12px;
+     width: 80%;
+     max-width: 400px;
+     text-align: center;
+}
+
+.close-button {
+     position: absolute;
+     top: 15px;
+     right: 20px;
+     cursor: pointer;
+     font-size: 1.5rem;
+}
+
+/* ===========================
+    Round Timer
+=========================== */
+.round-timer {
+     font-size: 0.9rem;
+     opacity: 0.7;
+     margin-top: 4px;
+     user-select: none;
+}
+
+/* ===========================
+    User Input
+=========================== */
+.user-input {
+     width: 80%;
+     padding: 12px;
+     font-size: 1.1rem;
+     border: 0;
+     border-radius: 12px;
+     background-color: rgba(0, 0, 0, 0.05);
+     color: var(--text-color);
+     text-align: center;
+     outline: none;
+}
+
+.user-input:focus {
+     border-color: var(--switch-on-bg);
+     box-shadow: none;
+}

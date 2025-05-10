@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Factorization Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Side Buttons Section -->
+    <div class="side-buttons">
+        <!-- Difficulty Switches -->
+        <div class="switch">
+            <button id="beginnerSwitch" class="switch-toggle" role="switch" aria-pressed="false"></button>
+            <label for="beginnerSwitch" class="switch-label">Beginner</label>
+        </div>
+        <div class="switch">
+            <button id="easySwitch" class="switch-toggle" role="switch" aria-pressed="false"></button>
+            <label for="easySwitch" class="switch-label">Easy</label>
+        </div>
+        <div class="switch">
+            <button id="mediumSwitch" class="switch-toggle" role="switch" aria-pressed="false"></button>
+            <label for="mediumSwitch" class="switch-label">Medium</label>
+        </div>
+        <div class="switch">
+            <button id="hardSwitch" class="switch-toggle" role="switch" aria-pressed="false"></button>
+            <label for="hardSwitch" class="switch-label">Hard</label>
+        </div>
+        <div class="switch">
+            <button id="extremeSwitch" class="switch-toggle" role="switch" aria-pressed="false"></button>
+            <label for="extremeSwitch" class="switch-label">Extreme</label>
+        </div>
+
+        <!-- Dark Mode Switch -->
+        <div class="switch">
+            <button id="darkModeSwitch" class="switch-toggle" role="switch" aria-pressed="false"></button>
+            <label for="darkModeSwitch" class="switch-label">Dark Mode</label>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div class="game-container">
+        <!-- Number Display -->
+        <div class="number-display" id="numberDisplay">56</div>
+
+        <!-- User Input -->
+        <input type="text" id="userInput" class="user-input"
+            placeholder="Enter a prime factor or press Enter if the number is prime." />
+
+        <!-- Ghost stopwatch (round time) -->
+        <div id="roundTimer" class="round-timer">0.00 s</div>
+
+        <!-- Feedback Section -->
+        <div class="feedback" id="feedback"></div>
+
+        <!-- Leaderboard Section -->
+        <div class="leaderboard">
+            <!-- Streak Information -->
+            <p>Streak: <span id="streak">0</span></p>
+            <p>Best Streak: <span id="bestStreak">0</span></p>
+
+            <!-- Leaderboard Controls -->
+            <div id="leaderboardControls" style="margin-bottom: 10px;">
+                <button id="toggleLeaderboard" class="button">Hide Leaderboard</button>
+                <button id="clearLeaderboard" class="button" style="margin-left: 10px;">Clear Leaderboard</button>
+            </div>
+
+            <!-- Leaderboard List -->
+            <div id="leaderboardList">
+                <h3>Leaderboard:</h3>
+                <ul id="leaderboardItems"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" class="modal hidden">
+        <div class="modal-content">
+            <span id="closeTutorial" class="close-button">&times;</span>
+            <h2>How to Play</h2>
+            <p>Enter prime factors one at a time. Press Enter to confirm a composite, or leave the input blank and press
+                Enter if it's prime.</p>
+            <img src="public/howtoplay.gif" alt="How to play" style="width: 100%; max-width: 300px; margin-top: 10px;">
+        </div>
+    </div>
+    <button id="showTutorial" class="button" style="position: absolute; top: 10px; right: 10px;">?</button>
+
+    <!-- Links to Homepage and GitHub -->
+    <div id="footer" style="text-align:center; margin-top: 20px;">
+        <p>
+            <a href="https://localhost433.github.io" target="_blank">My Homepage</a> |
+            <a href="https://github.com/localhost433/Prime-Factorization-Game" target="_blank">GitHub Repo</a>
+        </p>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="src/script.js"></script>
+</body>
+</html>
