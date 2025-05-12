@@ -21,7 +21,7 @@ class Game {
             timerId: null,
             elapsed: 0
         };
-
+        this.state.currentDifficulty = null;
         this.state.userId = null;
 
         // DOM Elements
@@ -164,6 +164,12 @@ class Game {
     }
 
     handleUserInput() {
+        if (!this.firstInputGiven) {
+            this.firstInputGiven = true;
+            this.state.startTime = performance.now();
+            this.startGhostTimer();
+        }
+        
         const input = this.userInput.value.trim();
 
         // Disallow blank submissions unless the current number is 1 or prime
@@ -237,10 +243,10 @@ class Game {
         const { min, max } = this.state.difficultyRange;
         this.state.originalNumber = this.generateRandomNumber(min, max);
         this.state.currentNumber = this.state.originalNumber;
-        this.state.startTime = performance.now();
-        this.resetGhostTimer();
+        this.state.startTime = 0;
         this.updateNumberDisplay();
         this.feedback.innerHTML = "Factorize the number or press 'Enter' if it's prime!";
+        this.firstInputGiven = false;
     }
 
     updateNumberDisplay() {
@@ -248,6 +254,24 @@ class Game {
     }
 
     setDifficulty(level) {
+        if (this.state.currentDifficulty === level) {
+            this.state.currentDifficulty = null;
+
+            [this.beginnerSwitch, this.easySwitch, this.mediumSwitch, this.hardSwitch, this.extremeSwitch].forEach(switchElement => {
+                switchElement.classList.remove('active');
+                switchElement.setAttribute('aria-pressed', false);
+            });
+            return;
+        }
+
+        this.state.currentDifficulty = level;
+
+        [this.beginnerSwitch, this.easySwitch, this.mediumSwitch, this.hardSwitch, this.extremeSwitch].forEach(switchElement => {
+            switchElement.classList.remove('active');
+            switchElement.setAttribute('aria-pressed', false);
+        });
+
+        // Difficulty ranges
         const ranges = {
             beginner: { min: 2, max: 29 },
             easy: { min: 30, max: 99 },
@@ -257,30 +281,27 @@ class Game {
         };
         this.state.difficultyRange = ranges[level];
 
-        const levels = ['beginner', 'easy', 'medium', 'hard', 'extreme'];
-        this.switchButtons.slice(0, 5).forEach((switchElement, index) => {
-            switchElement.addEventListener('click', () => this.setDifficulty(levels[index]));
-        });
-
-        if (level === 'beginner') {
-            this.beginnerSwitch.classList.add('active');
-            this.beginnerSwitch.setAttribute('aria-pressed', this.beginnerSwitch.classList.contains('active'));
-        }
-        if (level === 'easy') {
-            this.easySwitch.classList.add('active');
-            this.easySwitch.setAttribute('aria-pressed', this.easySwitch.classList.contains('active'));
-        }
-        if (level === 'medium') {
-            this.mediumSwitch.classList.add('active');
-            this.mediumSwitch.setAttribute('aria-pressed', this.mediumSwitch.classList.contains('active'));
-        }
-        if (level === 'hard') {
-            this.hardSwitch.classList.add('active');
-            this.hardSwitch.setAttribute('aria-pressed', this.hardSwitch.classList.contains('active'));
-        }
-        if (level === 'extreme') {
-            this.extremeSwitch.classList.add('active');
-            this.extremeSwitch.setAttribute('aria-pressed', this.extremeSwitch.classList.contains('active'));
+        switch (level) {
+            case 'beginner':
+                this.beginnerSwitch.classList.add('active');
+                this.beginnerSwitch.setAttribute('aria-pressed', true);
+                break;
+            case 'easy':
+                this.easySwitch.classList.add('active');
+                this.easySwitch.setAttribute('aria-pressed', true);
+                break;
+            case 'medium':
+                this.mediumSwitch.classList.add('active');
+                this.mediumSwitch.setAttribute('aria-pressed', true);
+                break;
+            case 'hard':
+                this.hardSwitch.classList.add('active');
+                this.hardSwitch.setAttribute('aria-pressed', true);
+                break;
+            case 'extreme':
+                this.extremeSwitch.classList.add('active');
+                this.extremeSwitch.setAttribute('aria-pressed', true);
+                break;
         }
 
         this.startNewRound();

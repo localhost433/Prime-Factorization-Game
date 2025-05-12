@@ -76,7 +76,7 @@ body {
 .button {
      background-color: transparent;
      color: var(--text-color);
-     border: 0px;
+     border: 2px solid transparent;
      border-radius: 10px;
      padding: 8px 16px;
      font-size: 1rem;
@@ -221,4 +221,18 @@ input[type="text"] {
 .user-input:focus {
      border-color: var(--switch-on-bg);
      box-shadow: none;
+}
+
+/* ===========================
+    Footer
+=========================== */
+#footer {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    opacity: 0.7;
+    user-select: none;
 }
