@@ -172,16 +172,14 @@ class Game {
         
         const input = this.userInput.value.trim();
 
-        // Disallow blank submissions unless the current number is 1 or prime
         if (!input) {
             if (this.state.currentNumber === 1 || this.isPrime(this.state.currentNumber)) {
-                this.feedback.textContent = "Correct! It's a prime.";
                 const fullFactorization = this.calculateFullFactorization(this.state.originalNumber);
-                this.feedback.textContent += ` Full factorization: ${fullFactorization}<br>${this.state.originalNumber} = ${fullFactorization.replace(/ × /g, ' * ')}`;
+                this.feedback.innerHTML = `Correct! It's a prime. Full factorization: ${fullFactorization}`;
                 this.state.streak++;
                 this.recordTime();
                 this.stopGhostTimer();
-                setTimeout(() => this.startNewRound(), 500);
+                setTimeout(() => this.startNewRound(), 2000);
             } else {
                 this.feedback.textContent = "Blank entry not allowed for non-prime numbers.";
                 return;
@@ -333,7 +331,6 @@ class Game {
             if (count > 0) factors.push(count > 1 ? `${divisor}^${count}` : `${divisor}`);
             divisor++;
         }
-
         return factors.join(' × ');
     }
 
