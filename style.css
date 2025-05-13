@@ -54,20 +54,20 @@ body {
     Leaderboard
 =========================== */
 #leaderboardList {
-    display: flex;
-    flex-direction: column;
-    flex: 0 0 20%;
-    min-width: 180px;
+     display: flex;
+     flex-direction: column;
+     flex: 0 0 20%;
+     min-width: 180px;
 
-    text-align: left;
+     text-align: left;
 }
 
 @media (max-width: 540px) {
-    #leaderboardList {
-        flex: 1 0 100%;
-        min-width: 0;
-        margin-top: 1rem;
-    }
+     #leaderboardList {
+          flex: 1 0 100%;
+          min-width: 0;
+          margin-top: 1rem;
+     }
 }
 
 /* ===========================
@@ -96,16 +96,22 @@ body {
 }
 
 /* ===========================
-    Switch Toggle
+     Switch Toggle
 =========================== */
 .switch {
      display: flex;
      align-items: center;
      gap: 10px;
+     border: 0px;
+     /* Ensure vertical alignment */
+     height: 28px;
 }
 
 .switch-label {
      font-size: 1.2rem;
+     border: 0;
+     /* Align label vertically with toggle */
+     line-height: 28px;
 }
 
 .switch-toggle {
@@ -116,6 +122,9 @@ body {
      border-radius: 14px;
      cursor: pointer;
      transition: background-color 0.3s;
+     border: 0;
+     display: flex;
+     align-items: center;
 }
 
 .switch-toggle::before {
@@ -131,10 +140,12 @@ body {
 }
 
 .switch-toggle.active {
+     border: 0;
      background-color: var(--switch-on-bg);
 }
 
 .switch-toggle.active::before {
+     border: 0;
      transform: translateX(22px);
 }
 
@@ -227,12 +238,12 @@ input[type="text"] {
     Footer
 =========================== */
 #footer {
-    position: absolute;
-    bottom: 10px;
-    width: 100%;
-    text-align: center;
-    color: var(--text-color);
-    font-size: 0.9rem;
-    opacity: 0.7;
-    user-select: none;
+     position: absolute;
+     bottom: 10px;
+     width: 100%;
+     text-align: center;
+     color: var(--text-color);
+     font-size: 0.9rem;
+     opacity: 0.7;
+     user-select: none;
 }

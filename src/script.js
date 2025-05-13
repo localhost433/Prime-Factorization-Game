@@ -255,23 +255,16 @@ class Game {
 
     setDifficulty(level) {
         if (this.state.currentDifficulty === level) {
-            this.state.currentDifficulty = null;
-
-            [this.beginnerSwitch, this.easySwitch, this.mediumSwitch, this.hardSwitch, this.extremeSwitch].forEach(switchElement => {
-                switchElement.classList.remove('active');
-                switchElement.setAttribute('aria-pressed', false);
-            });
             return;
         }
-
-        this.state.currentDifficulty = level;
 
         [this.beginnerSwitch, this.easySwitch, this.mediumSwitch, this.hardSwitch, this.extremeSwitch].forEach(switchElement => {
             switchElement.classList.remove('active');
             switchElement.setAttribute('aria-pressed', false);
         });
 
-        // Difficulty ranges
+        this.state.currentDifficulty = level;
+
         const ranges = {
             beginner: { min: 2, max: 29 },
             easy: { min: 30, max: 99 },
@@ -303,7 +296,6 @@ class Game {
                 this.extremeSwitch.setAttribute('aria-pressed', true);
                 break;
         }
-
         this.startNewRound();
     }
 
