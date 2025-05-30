@@ -30,6 +30,15 @@ export class Game {
         this.feedback = document.getElementById('feedback');
         this.roundTimer = document.getElementById('roundTimer');
 
+        this.toggleLeaderboardButton = document.getElementById('toggleLeaderboard');
+        this.clearLeaderboardButton = document.getElementById('clearLeaderboard');
+        this.leaderboardList = document.getElementById('leaderboardList');
+
+        this.darkModeSwitch = document.getElementById('darkModeSwitch');
+        this.modal = document.getElementById('tutorialModal');
+        this.showBtn = document.getElementById('showTutorial');
+        this.closeBtn = document.getElementById('closeTutorial');
+
         this.timer = new Timer(this.roundTimer);
         this.difficulty = new Difficulty(this);
         this.leaderboard = new Leaderboard(this);
@@ -41,11 +50,50 @@ export class Game {
         this.profile.load();
         this.difficulty.set('easy');
         this.leaderboard.render();
+
+        if (!localStorage.getItem('hasSeenTutorial')) {
+            this.modal.classList.remove('hidden');
+            localStorage.setItem('hasSeenTutorial', 'true');
+        }
     }
 
     setupEventListeners() {
         this.userInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') this.handleUserInput();
+        });
+
+        this.darkModeSwitch.addEventListener('click', () => {
+            const isDark = document.body.dataset.theme === 'dark';
+            document.body.dataset.theme = isDark ? 'light' : 'dark';
+            this.darkModeSwitch.classList.toggle('active', !isDark);
+            this.darkModeSwitch.setAttribute('aria-checked', (!isDark).toString());
+            this.darkModeSwitch.setAttribute('aria-pressed', (!isDark).toString());
+        });
+
+        this.showBtn.addEventListener('click', () => {
+            this.modal.classList.remove('hidden');
+        });
+
+        this.closeBtn.addEventListener('click', () => {
+            this.modal.classList.add('hidden');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+                this.modal.classList.add('hidden');
+            }
+        });
+
+        this.toggleLeaderboardButton.addEventListener('click', () => {
+            const isVisible = this.leaderboardList.style.display !== 'none';
+            this.leaderboardList.style.display = isVisible ? 'none' : 'flex';
+            this.toggleLeaderboardButton.textContent = isVisible ? 'Show Leaderboard' : 'Hide Leaderboard';
+        });
+
+        this.clearLeaderboardButton.addEventListener('click', () => {
+            localStorage.removeItem('leaderboard');
+            localStorage.removeItem('bestTimes');
+            this.leaderboard.render();
         });
     }
 
