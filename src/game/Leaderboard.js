@@ -10,22 +10,23 @@ export class Leaderboard {
         return this.game.state.currentDifficulty || 'easy';
     }
 
-    recordTime(time) {
+    recordTime(rawTime) {
+        const difficulty = this.getCurrentKey();
         const uid = this.game.state.userId;
         if (!uid) return;
-        const difficulty = this.getCurrentKey();
-        const username = localStorage.getItem('username') || 'Anonymous';
 
+        const username = localStorage.getItem('username') || 'Anonymous';
         const allTimes = JSON.parse(localStorage.getItem('bestTimes') || '{}');
         if (!allTimes[difficulty]) allTimes[difficulty] = {};
 
+        const finalTime = parseFloat(rawTime.toFixed(2));
         let entry = allTimes[difficulty][uid];
         if (!entry) {
-            entry = { name: username, best: time };
+            entry = { name: username, best: finalTime };
         } else {
-            const prev = parseFloat(entry.best);
-            if (!isNaN(prev) && time < prev) {
-                entry.best = time;
+            const prev = Number(entry.best);
+            if (isNaN(prev) || finalTime < prev) {
+                entry.best = finalTime;
             }
             entry.name = username;
         }
@@ -43,7 +44,7 @@ export class Leaderboard {
         if (!allBoards[difficulty]) allBoards[difficulty] = {};
 
         const name = localStorage.getItem('username') || 'Anonymous';
-        const streak = this.game.state.streak;
+        const streak = this.game.state.streaks?.[difficulty] || 0;
         const prev = allBoards[difficulty][uid]?.streak ?? 0;
 
         if (streak > prev) {

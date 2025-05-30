@@ -12,33 +12,33 @@ export class Game {
         this.state = {
             currentNumber: null,
             originalNumber: null,
-            streak: 0,
-            bestStreak: 0,
+            streaks: {},
+            bestStreaks: {},
             difficultyRange: { min: 30, max: 99 },
             currentDifficulty: null,
             userId: null,
-            elapsed: 0,
+            startTime: 0,
+            elapsed: 0
         };
-
         this.firstInputGiven = false;
         this.nextRoundTimeout = null;
 
+        // DOM elements
         this.numberDisplay = document.getElementById('numberDisplay');
         this.userInput = document.getElementById('userInput');
         this.streakDisplay = document.getElementById('streak');
         this.bestStreakDisplay = document.getElementById('bestStreak');
         this.feedback = document.getElementById('feedback');
         this.roundTimer = document.getElementById('roundTimer');
-
         this.toggleLeaderboardButton = document.getElementById('toggleLeaderboard');
         this.clearLeaderboardButton = document.getElementById('clearLeaderboard');
         this.leaderboardList = document.getElementById('leaderboardList');
-
         this.darkModeSwitch = document.getElementById('darkModeSwitch');
         this.modal = document.getElementById('tutorialModal');
         this.showBtn = document.getElementById('showTutorial');
         this.closeBtn = document.getElementById('closeTutorial');
 
+        // modules
         this.timer = new Timer(this.roundTimer);
         this.leaderboard = new Leaderboard(this);
         this.profile = new Profile(this);
@@ -58,7 +58,7 @@ export class Game {
     }
 
     setupEventListeners() {
-        this.userInput.addEventListener('keydown', (e) => {
+        this.userInput.addEventListener('keydown', e => {
             if (e.key === 'Enter') this.handleUserInput();
         });
 
@@ -91,16 +91,25 @@ export class Game {
         });
 
         this.clearLeaderboardButton.addEventListener('click', () => {
-            localStorage.removeItem('leaderboard');
-            localStorage.removeItem('bestTimes');
+            const diff = this.state.currentDifficulty;
+            const boards = JSON.parse(localStorage.getItem('leaderboard') || '{}');
+            const times = JSON.parse(localStorage.getItem('bestTimes') || '{}');
+            if (boards[diff]) delete boards[diff];
+            if (times[diff]) delete times[diff];
+            localStorage.setItem('leaderboard', JSON.stringify(boards));
+            localStorage.setItem('bestTimes', JSON.stringify(times));
             this.leaderboard.render();
+            this.updateStats();
         });
     }
 
     handleUserInput() {
         const input = this.userInput.value.trim();
+        const diff = this.state.currentDifficulty;
+
         if (!this.firstInputGiven) {
             this.firstInputGiven = true;
+            this.state.startTime = performance.now();
             this.timer.start();
         }
 
@@ -123,23 +132,33 @@ export class Game {
                 if (this.state.currentNumber === 1) this.successHandler();
             } else {
                 this.feedback.textContent = 'Incorrect. Streak reset!';
-                this.state.streak = 0;
+                this.state.streaks[diff] = 0;
+                this.updateStats();
             }
         } else {
             this.feedback.textContent = 'Invalid input.';
         }
-
         this.userInput.value = '';
-        this.updateStats();
     }
 
     successHandler() {
-        const full = calculateFullFactorization(this.state.originalNumber);
-        this.feedback.innerHTML = `Full factorization: ${full}`;
-        this.state.streak++;
+        const diff = this.state.currentDifficulty;
         this.timer.stop();
+        this.state.elapsed = (performance.now() - this.state.startTime) / 1000;
+
+        // update streak
+        this.state.streaks[diff] = (this.state.streaks[diff] || 0) + 1;
+        this.updateStats();
+
+        // record time and streak
         this.leaderboard.recordTime(this.state.elapsed);
         this.leaderboard.saveStreak();
+
+        // show full factorization
+        const full = calculateFullFactorization(this.state.originalNumber);
+        this.feedback.innerHTML = `Full factorization: ${full}`;
+
+        // next round
         this.nextRoundTimeout = setTimeout(() => this.startNewRound(), 1500);
     }
 
@@ -159,15 +178,25 @@ export class Game {
     }
 
     updateStats() {
-        this.streakDisplay.textContent = this.state.streak;
-        this.state.bestStreak = Math.max(this.state.bestStreak, this.state.streak);
-        this.bestStreakDisplay.textContent = this.state.bestStreak;
+        const diff = this.state.currentDifficulty;
+        const current = this.state.streaks[diff] || 0;
+        const prevBest = this.state.bestStreaks[diff] || 0;
+        const newBest = Math.max(prevBest, current);
+
+        this.state.bestStreaks[diff] = newBest;
+        if (newBest > prevBest) {
+            this.leaderboard.saveStreak();
+        }
+        this.streakDisplay.textContent     = current;
+        this.bestStreakDisplay.textContent = newBest;
     }
 
     updateDifficultyDisplay() {
         if (!this.state.userId) return;
-        this.state.bestStreak = this.leaderboard.getBestStreak(this.state.userId);
-        this.bestStreakDisplay.textContent = this.state.bestStreak;
+        const diff = this.state.currentDifficulty;
+        this.state.bestStreaks[diff] = this.leaderboard.getBestStreak(this.state.userId, diff) || 0;
+        this.bestStreakDisplay.textContent = this.state.bestStreaks[diff];
         this.leaderboard.render();
+        this.updateStats();
     }
 }
