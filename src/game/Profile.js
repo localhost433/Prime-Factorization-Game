@@ -57,7 +57,7 @@ export class Profile {
         localStorage.setItem('userId', newId);
         localStorage.setItem('username', name);
 
-        this.game.state.bestStreak = this.getBestStreak(newId);
+        this.game.state.bestStreak = this.game.leaderboard.getBestStreak(newId);
         this.game.bestStreakDisplay.textContent = this.game.state.bestStreak;
         this.game.leaderboard.render();
     }
@@ -65,28 +65,29 @@ export class Profile {
     migrateProfile(oldId, newId, name) {
         if (!oldId || oldId === newId) return;
 
-        const lb = JSON.parse(localStorage.getItem('leaderboard') || '{}');
-        const bt = JSON.parse(localStorage.getItem('bestTimes') || '{}');
+        const allBoards = JSON.parse(localStorage.getItem('leaderboard') || '{}');
+        const allTimes = JSON.parse(localStorage.getItem('bestTimes') || '{}');
 
-        if (lb[oldId]) {
-            lb[newId] = {
-                name,
-                streak: Math.max(lb[oldId].streak, lb[newId]?.streak ?? 0)
-            };
-            delete lb[oldId];
-            localStorage.setItem('leaderboard', JSON.stringify(lb));
+        for (const diff in allBoards) {
+            if (allBoards[diff][oldId]) {
+                const oldStreak = allBoards[diff][oldId].streak;
+                const newStreak = allBoards[diff][newId]?.streak ?? 0;
+                allBoards[diff][newId] = { name, streak: Math.max(oldStreak, newStreak) };
+                delete allBoards[diff][oldId];
+            }
         }
 
-        if (bt[oldId]) {
-            const oldTime = parseFloat(bt[oldId].best);
-            const newTime = parseFloat(bt[newId]?.best ?? Infinity);
-            bt[newId] = {
-                name,
-                best: Math.min(oldTime, newTime)
-            };
-            delete bt[oldId];
-            localStorage.setItem('bestTimes', JSON.stringify(bt));
+        for (const diff in allTimes) {
+            if (allTimes[diff][oldId]) {
+                const oldTime = parseFloat(allTimes[diff][oldId].best);
+                const newTime = parseFloat(allTimes[diff][newId]?.best ?? Infinity);
+                allTimes[diff][newId] = { name, best: Math.min(oldTime, newTime) };
+                delete allTimes[diff][oldId];
+            }
         }
+
+        localStorage.setItem('leaderboard', JSON.stringify(allBoards));
+        localStorage.setItem('bestTimes', JSON.stringify(allTimes));
     }
 
     load() {
@@ -100,15 +101,10 @@ export class Profile {
             localStorage.setItem('userId', id);
             localStorage.setItem('username', name);
 
-            this.game.state.bestStreak = this.getBestStreak(id);
+            this.game.state.bestStreak = this.game.leaderboard.getBestStreak(id);
             this.game.bestStreakDisplay.textContent = this.game.state.bestStreak;
         });
 
         document.querySelector('.game-container').prepend(this.display);
-    }
-
-    getBestStreak(userId) {
-        const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '{}');
-        return leaderboard[userId]?.streak ?? 0;
     }
 }

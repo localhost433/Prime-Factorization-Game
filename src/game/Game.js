@@ -40,9 +40,9 @@ export class Game {
         this.closeBtn = document.getElementById('closeTutorial');
 
         this.timer = new Timer(this.roundTimer);
-        this.difficulty = new Difficulty(this);
         this.leaderboard = new Leaderboard(this);
         this.profile = new Profile(this);
+        this.difficulty = new Difficulty(this);
     }
 
     init() {
@@ -162,5 +162,12 @@ export class Game {
         this.streakDisplay.textContent = this.state.streak;
         this.state.bestStreak = Math.max(this.state.bestStreak, this.state.streak);
         this.bestStreakDisplay.textContent = this.state.bestStreak;
+    }
+
+    updateDifficultyDisplay() {
+        if (!this.state.userId) return;
+        this.state.bestStreak = this.leaderboard.getBestStreak(this.state.userId);
+        this.bestStreakDisplay.textContent = this.state.bestStreak;
+        this.leaderboard.render();
     }
 }
