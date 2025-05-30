@@ -1,51 +1,93 @@
+function fnv1a32(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return ('00000000' + h.toString(16)).slice(-8);
+}
+
+function migrateProfile(oldId, newId, newName) {
+    if (!oldId || oldId === newId) return;
+
+    const lb = JSON.parse(localStorage.getItem('leaderboard') || '{}');
+    const bt = JSON.parse(localStorage.getItem('bestTimes') || '{}');
+
+    if (lb[oldId]) {
+        const mergedStreak = Math.max(lb[oldId].streak, lb[newId]?.streak ?? 0);
+        lb[newId] = { name: newName, streak: mergedStreak };
+        delete lb[oldId];
+        localStorage.setItem('leaderboard', JSON.stringify(lb));
+    }
+
+    if (bt[oldId]) {
+        const mergedBest = bt[newId]
+            ? Math.min(parseFloat(bt[newId].best), parseFloat(bt[oldId].best))
+            : parseFloat(bt[oldId].best);
+        bt[newId] = { name: newName, best: mergedBest };
+        delete bt[oldId];
+        localStorage.setItem('bestTimes', JSON.stringify(bt));
+    }
+}
 
 async function sha256(str) {
-    if (!window.crypto?.subtle) return str;
-    const data = new TextEncoder().encode(str);
-    const digest = await crypto.subtle.digest('SHA-256', data);
-    return [...new Uint8Array(digest)]
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
+    if (window.crypto?.subtle) {
+        const buf = await crypto.subtle.digest(
+            'SHA-256',
+            new TextEncoder().encode(str)
+        );
+        const hex = [...new Uint8Array(buf)]
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+        return 'sha_' + hex;
+    } else {
+        return 'fnv_' + fnv1a32(str);
+    }
 }
 
 class Game {
     constructor() {
         // State
         this.state = {
-            currentNumber: null,
-            originalNumber: null,
-            streak: 0,
-            bestStreak: 0,
-            difficultyRange: { min: 20, max: 100 },
-            startTime: 0,
-            timerId: null,
-            elapsed: 0
+            currentNumber:     null,
+            originalNumber:    null,
+            streak:            0,
+            bestStreak:        0,
+            difficultyRange:   { min: 20, max: 100 },
+            startTime:         0,
+            timerId:           null,
+            elapsed:           0,
+            currentDifficulty: null
         };
-        this.state.currentDifficulty = null;
-        this.state.userId = null;
+        this.firstInputGiven = false;
+        this.state.userId    = null;
 
         // DOM Elements
-        this.usernameDisplay = document.createElement("div");
-        this.numberDisplay = document.getElementById('numberDisplay');
-        this.userInput = document.getElementById('userInput');
-        this.streakDisplay = document.getElementById('streak');
+        this.usernameDisplay   = document.createElement("div");
+        this.numberDisplay     = document.getElementById('numberDisplay');
+        this.userInput         = document.getElementById('userInput');
+        this.streakDisplay     = document.getElementById('streak');
         this.bestStreakDisplay = document.getElementById('bestStreak');
-        this.feedback = document.getElementById('feedback');
+        this.feedback          = document.getElementById('feedback');
+
         this.toggleLeaderboardButton = document.getElementById('toggleLeaderboard');
-        this.clearLeaderboardButton = document.getElementById('clearLeaderboard');
-        this.leaderboardList = document.getElementById('leaderboardList');
-        this.leaderboardItems = document.getElementById('leaderboardItems');
-        this.switchButtons = Array.from(document.querySelectorAll('.switch > button'));
-        [this.beginnerSwitch,
-            this.easySwitch,
-            this.mediumSwitch,
-            this.hardSwitch,
-            this.extremeSwitch,
-            this.darkSwitch] = this.switchButtons;
-        this.modal = document.getElementById('tutorialModal');
-        this.closeBtn = document.getElementById('closeTutorial');
-        this.showBtn = document.getElementById('showTutorial');
-        this.roundTimer = document.getElementById('roundTimer');
+        this.clearLeaderboardButton  = document.getElementById('clearLeaderboard');
+        this.leaderboardList         = document.getElementById('leaderboardList');
+        this.leaderboardItems        = document.getElementById('leaderboardItems');
+        
+        this.beginnerSwitch = document.getElementById('beginnerSwitch');
+        this.easySwitch     = document.getElementById('easySwitch');
+        this.mediumSwitch   = document.getElementById('mediumSwitch');
+        this.hardSwitch     = document.getElementById('hardSwitch');
+        this.extremeSwitch  = document.getElementById('extremeSwitch');
+        this.darkModeSwitch = document.getElementById('darkModeSwitch');
+
+        this.modal       = document.getElementById('tutorialModal');
+        this.closeBtn    = document.getElementById('closeTutorial');
+        this.showBtn     = document.getElementById('showTutorial');
+        this.roundTimer  = document.getElementById('roundTimer');
+
+        window.addEventListener('beforeunload', this.stopGhostTimer.bind(this));
 
         // Username Element Setup
         this.setupUsernameDisplay();
@@ -86,18 +128,29 @@ class Game {
 
             input.addEventListener('blur', () => {
                 const newName = input.value.trim() || "Anonymous";
-                sha256(newName.toLowerCase()).then(hash => {
-                    this.state.userId = hash;
+                const oldId = this.state.userId;
+
+                sha256(newName.toLowerCase()).then(newHash => {
+                    migrateProfile(oldId, newHash, newName);
+
+                    this.state.userId = newHash;
+                    localStorage.setItem('userId', newHash);
+                    localStorage.setItem('username', newName);
+
                     this.usernameDisplay.textContent = `Player: ${newName}`;
-                    this.state.bestStreak = this.getBestStreak(hash);
+                    this.state.bestStreak = this.getBestStreak(newHash);
                     this.bestStreakDisplay.textContent = this.state.bestStreak;
+
                     this.updateLeaderboardDisplay();
                 });
                 input.replaceWith(this.usernameDisplay);
             });
 
-            input.addEventListener("keypress", (event) => {
-                if (event.key === "Enter") input.blur();
+            input.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" && !event.altKey && !event.ctrlKey && !event.metaKey) {
+                    event.preventDefault();
+                    input.blur();
+                }
             });
         });
     }
@@ -115,7 +168,21 @@ class Game {
             localStorage.setItem('hasSeenTutorial', 'true');
         }
 
-        // Initialize scoreboard
+        const storedName = localStorage.getItem('username') || 'Anonymous';
+        this.usernameDisplay.textContent = `Player: ${storedName}`;
+
+        sha256(storedName.toLowerCase()).then(uid => {
+            const lastUid = localStorage.getItem('userId');
+            migrateProfile(lastUid, uid, storedName);
+            this.state.userId = uid;
+            localStorage.setItem('userId', uid);
+            localStorage.setItem('username', storedName);
+
+            this.state.bestStreak = this.getBestStreak(uid);
+            this.bestStreakDisplay.textContent = this.state.bestStreak;
+            this.updateLeaderboardDisplay();
+        });
+
         this.updateLeaderboardDisplay();
 
         // Default difficulty
@@ -123,37 +190,51 @@ class Game {
     }
 
     setupEventListeners() {
-        const darkSwitch = this.switchButtons.at(-1);
-        darkSwitch.addEventListener('click', () => {
+        this.darkModeSwitch.addEventListener('click', () => {
             const isDark = document.body.dataset.theme === 'dark';
             document.body.dataset.theme = isDark ? 'light' : 'dark';
-            this.darkSwitch.classList.toggle('active', !isDark);
+            this.darkModeSwitch.classList.toggle('active', !isDark);
+            this.darkModeSwitch.setAttribute('aria-checked', (!isDark).toString());
+            this.darkModeSwitch.setAttribute('aria-pressed', (!isDark).toString());
         });
 
         this.userInput.addEventListener('focus', () => {
             this.userInput.scrollIntoView({ block: 'center' });
         });
 
-        this.userInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
+        this.userInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+                event.preventDefault();
                 this.handleUserInput();
             }
         });
 
+        if (!this.leaderboardList.style.display) {
+            this.leaderboardList.style.display = 'block';
+        }
+
         this.toggleLeaderboardButton.addEventListener('click', () => {
-            const isHidden = this.leaderboardList.style.display === 'none';
-            this.leaderboardList.style.display = isHidden ? 'block' : 'none';
-            this.toggleLeaderboardButton.textContent = isHidden ? 'Hide Leaderboard' : 'Show Leaderboard';
+            const isVisible = this.leaderboardList.style.display !== 'none';
+            this.leaderboardList.style.display = isVisible ? 'none' : 'flex';
+            this.toggleLeaderboardButton.textContent = isVisible ? 'Show Leaderboard' : 'Hide Leaderboard';
         });
 
         this.clearLeaderboardButton.addEventListener('click', () => {
             localStorage.removeItem('leaderboard');
+            localStorage.removeItem('bestTimes');
             this.leaderboardItems.innerHTML = '';
+            this.updateLeaderboardDisplay();
         });
 
         [this.beginnerSwitch, this.easySwitch, this.mediumSwitch, this.hardSwitch, this.extremeSwitch].forEach((switchElement, index) => {
             const levels = ['beginner', 'easy', 'medium', 'hard', 'extreme'];
             switchElement.addEventListener('click', () => this.setDifficulty(levels[index]));
+            switchElement.addEventListener('keydown', (event) => {
+                if (event.key === ' ' || event.key === 'Spacebar' || event.key === 'Enter') {
+                    event.preventDefault();
+                    switchElement.click();
+                }
+            });
         });
 
         this.showBtn.addEventListener('click', () => this.modal.classList.remove('hidden'));
@@ -169,25 +250,47 @@ class Game {
             this.state.startTime = performance.now();
             this.startGhostTimer();
         }
-        
+
         const input = this.userInput.value.trim();
 
         if (!input) {
-            if (this.state.currentNumber === 1 || this.isPrime(this.state.currentNumber)) {
+            if (this.state.currentNumber === 1) {
                 const fullFactorization = this.calculateFullFactorization(this.state.originalNumber);
-                this.feedback.innerHTML = `Correct! It's a prime. Full factorization: ${fullFactorization}`;
-                this.state.streak++;
-                this.recordTime();
-                this.stopGhostTimer();
-                setTimeout(() => this.startNewRound(), 2000);
-            } else {
+                this.feedback.innerHTML =
+                    `Correct! Full factorization: ${fullFactorization}<br>${this.state.originalNumber} = ` +
+                    fullFactorization.replace(/ × /g, ' * ');
+            }
+            else if (this.isPrime(this.state.currentNumber)) {
+                const fullFactorization = this.calculateFullFactorization(this.state.originalNumber);
+                this.feedback.innerHTML =
+                    `Correct! It's a prime. Full factorization: ${fullFactorization}`;
+            }
+            else {
                 this.feedback.textContent = "Blank entry not allowed for non-prime numbers.";
                 return;
             }
+            this.state.streak++;
+            this.stopGhostTimer();
+            this.recordTime();
+            this.saveBestStreak(this.state.bestStreak);
+            setTimeout(() => this.startNewRound(), this.state.currentNumber === 1 ? 1000 : 2000);
         } else {
             const match = input.match(/^\d+$/);
             if (match) {
                 const factor = parseInt(input, 10);
+                if (factor <= 0) {
+                    this.feedback.textContent = "I have to say you are pretty creative, but not in this game.";
+                    this.userInput.value = "";
+                    this.updateStats();
+                    return;
+                }
+                else if (factor == 1) {
+                    this.feedback.textContent = "1 is not a prime factor-please enter a prime > 1.";
+                    this.userInput.value = "";
+                    this.updateStats();
+                    return;
+                }
+
                 if (this.state.currentNumber % factor === 0 && this.isPrime(factor)) {
                     while (this.state.currentNumber % factor === 0) {
                         this.state.currentNumber /= factor;
@@ -197,9 +300,10 @@ class Game {
 
                     if (this.state.currentNumber === 1) {
                         const fullFactorization = this.calculateFullFactorization(this.state.originalNumber);
-                        this.feedback.textContent += ` Full factorization: ${fullFactorization}<br>${this.state.originalNumber} = ${fullFactorization.replace(/ × /g, ' * ')}`;
+                        this.feedback.innerHTML = `Correct! Full factorization: ${fullFactorization}<br>${this.state.originalNumber} = ${fullFactorization.replace(/ × /g, ' * ')}`;
                         this.state.streak++;
                         this.recordTime();
+                        this.saveBestStreak(this.state.bestStreak);
                         this.stopGhostTimer();
                         setTimeout(() => this.startNewRound(), 1000);
                     }
@@ -217,11 +321,12 @@ class Game {
     }
 
     startGhostTimer() {
+        this.stopGhostTimer();
         this.state.elapsed = 0;
-        this.roundTimer.textContent = '0.00 s';
+        this.roundTimer.textContent = '0.00 s';
         this.state.timerId = setInterval(() => {
             this.state.elapsed = (performance.now() - this.state.startTime) / 1000;
-            this.roundTimer.textContent = this.state.elapsed.toFixed(2) + ' s';
+            this.roundTimer.textContent = this.state.elapsed.toFixed(2) + ' s';
         }, 50);
     }
 
@@ -241,9 +346,11 @@ class Game {
         const { min, max } = this.state.difficultyRange;
         this.state.originalNumber = this.generateRandomNumber(min, max);
         this.state.currentNumber = this.state.originalNumber;
-        this.state.startTime = 0;
         this.updateNumberDisplay();
         this.feedback.innerHTML = "Factorize the number or press 'Enter' if it's prime!";
+        this.stopGhostTimer();
+        this.roundTimer.textContent = '0.00 s';
+        this.state.elapsed = 0;
         this.firstInputGiven = false;
     }
 
@@ -256,9 +363,11 @@ class Game {
             return;
         }
 
-        [this.beginnerSwitch, this.easySwitch, this.mediumSwitch, this.hardSwitch, this.extremeSwitch].forEach(switchElement => {
-            switchElement.classList.remove('active');
-            switchElement.setAttribute('aria-pressed', false);
+        const allSwitches = [this.beginnerSwitch, this.easySwitch, this.mediumSwitch, this.hardSwitch, this.extremeSwitch];
+        allSwitches.forEach(sw => {
+            sw.classList.remove('active');
+            sw.setAttribute('aria-pressed', 'false');
+            sw.setAttribute('aria-checked', 'false');
         });
 
         this.state.currentDifficulty = level;
@@ -272,37 +381,24 @@ class Game {
         };
         this.state.difficultyRange = ranges[level];
 
+        let switchToActivate;
         switch (level) {
-            case 'beginner':
-                this.beginnerSwitch.classList.add('active');
-                this.beginnerSwitch.setAttribute('aria-pressed', true);
-                break;
-            case 'easy':
-                this.easySwitch.classList.add('active');
-                this.easySwitch.setAttribute('aria-pressed', true);
-                break;
-            case 'medium':
-                this.mediumSwitch.classList.add('active');
-                this.mediumSwitch.setAttribute('aria-pressed', true);
-                break;
-            case 'hard':
-                this.hardSwitch.classList.add('active');
-                this.hardSwitch.setAttribute('aria-pressed', true);
-                break;
-            case 'extreme':
-                this.extremeSwitch.classList.add('active');
-                this.extremeSwitch.setAttribute('aria-pressed', true);
-                break;
+            case 'beginner': switchToActivate = this.beginnerSwitch; break;
+            case 'easy': switchToActivate = this.easySwitch; break;
+            case 'medium': switchToActivate = this.mediumSwitch; break;
+            case 'hard': switchToActivate = this.hardSwitch; break;
+            case 'extreme': switchToActivate = this.extremeSwitch; break;
         }
+        switchToActivate.classList.add('active');
+        switchToActivate.setAttribute('aria-pressed', 'true');
+        switchToActivate.setAttribute('aria-checked', 'true');
         this.startNewRound();
     }
 
     async updateStats() {
         this.streakDisplay.textContent = this.state.streak;
-        const username = this.usernameDisplay.textContent.replace('Player: ', '') || "Anonymous";
         this.state.bestStreak = Math.max(this.state.bestStreak, this.state.streak);
-        this.saveBestStreak(this.state.streak);
-        this.bestStreakDisplay.textContent = this.getBestStreak(this.state.userId);
+        this.bestStreakDisplay.textContent = this.state.bestStreak;
     }
 
     generateRandomNumber(min, max) {
@@ -318,18 +414,25 @@ class Game {
     }
 
     calculateFullFactorization(num) {
+        if (!Number.isInteger(num) || num < 2) {
+            console.warn(`Invalid input to calculateFullFactorization: ${num}`);
+            return '';
+        }
         let copy = num;
         const factors = [];
-        let divisor = 2;
 
-        while (copy > 1) {
+        for (let divisor = 2; divisor * divisor <= copy; divisor++) {
             let count = 0;
             while (copy % divisor === 0) {
                 copy /= divisor;
                 count++;
             }
-            if (count > 0) factors.push(count > 1 ? `${divisor}^${count}` : `${divisor}`);
-            divisor++;
+            if (count > 0) {
+                factors.push(count > 1 ? `${divisor}^${count}` : `${divisor}`);
+            }
+        }
+        if (copy > 1) {
+            factors.push(`${copy}`);
         }
         return factors.join(' × ');
     }
@@ -337,14 +440,21 @@ class Game {
     recordTime() {
         if (!this.state.userId) return;
 
-        const finalTime = this.state.elapsed.toFixed(2);
-        const username = this.usernameDisplay.textContent.replace('Player: ', '') || 'Anonymous';
-
+        const finalTime = parseFloat(this.state.elapsed.toFixed(2));
+        const username = this.usernameDisplay.textContent.replace('Player: ', '') || 'Anonymous';
         const bestTimes = JSON.parse(localStorage.getItem('bestTimes') || '{}');
 
-        const entry = bestTimes[this.state.userId] || { name: username, best: Infinity };
-        if (finalTime < entry.best) entry.best = finalTime;
-        entry.name = username;
+        let entry = bestTimes[this.state.userId];
+        if (!entry) {
+            entry = { name: username, best: finalTime };
+        } else {
+            const stored = parseFloat(entry.best);
+            const currentBest = Number.isFinite(stored) ? stored : finalTime;
+            if (finalTime < currentBest) {
+                entry.best = finalTime;
+            }
+            entry.name = username;
+        }
 
         bestTimes[this.state.userId] = entry;
         localStorage.setItem('bestTimes', JSON.stringify(bestTimes));
@@ -359,13 +469,15 @@ class Game {
         const rows = [...allIds].map(id => {
             const s = streaks[id] ?? { name: bestTimes[id]?.name ?? 'Anonymous', streak: 0 };
             const t = bestTimes[id] ?? { name: s.name, best: '—' };
-            return { name: s.name, streak: s.streak, time: t.best };
+            const formattedTime = t.best === '—' ? '—' :
+                (typeof t.best === 'number' ? t.best.toFixed(2) : t.best);
+            return { name: s.name, streak: s.streak, time: formattedTime };
         })
             .sort((a, b) => b.streak - a.streak)
             .slice(0, 5);
 
         this.leaderboardItems.innerHTML = rows
-            .map(r => `<li>${this.escapeHTML(r.name)}: ${r.streak} (Best Time: ${r.time})</li>`)
+            .map(r => `<li>${this.escapeHTML(r.name)}: ${r.streak} (Best Time: ${r.time})</li>`)
             .join('');
     }
 
@@ -376,12 +488,8 @@ class Game {
     }
 
     saveBestStreak(streak) {
-        // Only accept if the current number has truly been reduced to 1
-        if (this.state.currentNumber !== 1) return;
-
-        // No saving for anonymous users
+        if (this.state.currentNumber !== 1 && !this.isPrime(this.state.originalNumber)) return;
         if (!this.state.userId) return;
-
         const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '{}');
 
         // Each entry is { name, streak }
