@@ -75,13 +75,15 @@ export class Leaderboard {
             .select('streak')
             .eq('user_id', userId)
             .eq('difficulty', difficulty)
-            .single();
+            .maybeSingle();
 
-        if (error) {
-            console.error('Error fetching best streak:', error);
+        if (error || !data) {
+            if (error) {
+                console.error('Error fetching best streak:', error);
+            }
             return 0;
         }
-        return data?.streak ?? 0;
+        return data.streak ?? 0;
     }
 
     escape(str) {
