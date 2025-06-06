@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabase.js';
+import { supabase, LEADERBOARD_TABLE } from '../utils/supabase.js';
 
 export class Leaderboard {
     constructor(gameInstance) {
@@ -22,7 +22,7 @@ export class Leaderboard {
         const best_time = parseFloat(rawTime.toFixed(2));
 
         await supabase
-            .from('leaderboard')
+            .from(LEADERBOARD_TABLE)
             .upsert(
                 { user_id, difficulty, name, best_time },
                 { onConflict: ['user_id', 'name'] }
@@ -38,7 +38,7 @@ export class Leaderboard {
         const streak = this.game.state.streaks?.[difficulty] || 0;
 
         await supabase
-            .from('leaderboard')
+            .from(LEADERBOARD_TABLE)
             .upsert(
                 { user_id, difficulty, name, streak },
                 { onConflict: ['user_id', 'name'] }
@@ -48,7 +48,7 @@ export class Leaderboard {
     async render() {
         const difficulty = this.getCurrentKey();
         const { data, error } = await supabase
-            .from('leaderboard')
+            .from(LEADERBOARD_TABLE)
             .select('name, streak, best_time')
             .eq('difficulty', difficulty)
             .order('streak', { ascending: false })
@@ -71,7 +71,7 @@ export class Leaderboard {
     async getBestStreak(userId) {
         const difficulty = this.getCurrentKey();
         const { data, error } = await supabase
-            .from('leaderboard')
+            .from(LEADERBOARD_TABLE)
             .select('streak')
             .eq('user_id', userId)
             .eq('difficulty', difficulty)
