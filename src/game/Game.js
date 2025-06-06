@@ -5,7 +5,6 @@ import { Difficulty } from './Difficulty.js';
 import { Leaderboard } from './Leaderboard.js';
 import { Profile } from './Profile.js';
 import { isPrime, calculateFullFactorization, generateRandomNumber } from '../utils/primes.js';
-import { escapeHTML } from '../utils/dom.js';
 
 export class Game {
     constructor() {
