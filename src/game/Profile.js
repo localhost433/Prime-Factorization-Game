@@ -57,7 +57,7 @@ export class Profile {
         localStorage.setItem('userId', newId);
         localStorage.setItem('username', name);
 
-        this.game.state.bestStreak = this.game.leaderboard.getBestStreak(newId);
+        this.game.state.bestStreak = await this.game.leaderboard.getBestStreak(newId);
         this.game.bestStreakDisplay.textContent = this.game.state.bestStreak;
         this.game.leaderboard.render();
     }
@@ -94,14 +94,14 @@ export class Profile {
         const name = localStorage.getItem('username') || 'Anonymous';
         this.display.textContent = `Player: ${name}`;
 
-        sha256(name.toLowerCase()).then((id) => {
+        sha256(name.toLowerCase()).then(async (id) => {
             const oldId = localStorage.getItem('userId');
             this.migrateProfile(oldId, id, name);
             this.game.state.userId = id;
             localStorage.setItem('userId', id);
             localStorage.setItem('username', name);
 
-            this.game.state.bestStreak = this.game.leaderboard.getBestStreak(id);
+            this.game.state.bestStreak = await this.game.leaderboard.getBestStreak(id);
             this.game.bestStreakDisplay.textContent = this.game.state.bestStreak;
         });
 

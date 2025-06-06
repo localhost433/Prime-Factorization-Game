@@ -34,7 +34,7 @@ export class Difficulty {
         });
     }
 
-    set(level) {
+    async set(level) {
         if (this.game.state.currentDifficulty === level) return;
 
         // Reset all switches
@@ -55,7 +55,7 @@ export class Difficulty {
         this.game.state.difficultyRange     = this.ranges[level];
 
         // Refresh leaderboard and best streak for this difficulty
-        this.game.updateDifficultyDisplay();
+        await this.game.updateDifficultyDisplay();
 
         // Start a new round with the updated range
         this.game.startNewRound();

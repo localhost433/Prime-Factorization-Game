@@ -190,10 +190,10 @@ export class Game {
         this.bestStreakDisplay.textContent = newBest;
     }
 
-    updateDifficultyDisplay() {
+    async updateDifficultyDisplay() {
         if (!this.state.userId) return;
         const diff = this.state.currentDifficulty;
-        this.state.bestStreaks[diff] = this.leaderboard.getBestStreak(this.state.userId, diff) || 0;
+        this.state.bestStreaks[diff] = await this.leaderboard.getBestStreak(this.state.userId, diff) || 0;
         this.bestStreakDisplay.textContent = this.state.bestStreaks[diff];
         this.leaderboard.render();
         this.updateStats();

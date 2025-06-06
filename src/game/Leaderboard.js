@@ -25,7 +25,7 @@ export class Leaderboard {
             .from(LEADERBOARD_TABLE)
             .upsert(
                 { user_id, difficulty, name, best_time },
-                { onConflict: ['user_id', 'name'] }
+                { onConflict: ['user_id', 'difficulty'] }
             );
     }
 
@@ -41,7 +41,7 @@ export class Leaderboard {
             .from(LEADERBOARD_TABLE)
             .upsert(
                 { user_id, difficulty, name, streak },
-                { onConflict: ['user_id', 'name'] }
+                { onConflict: ['user_id', 'difficulty'] }
             );
     }
 
