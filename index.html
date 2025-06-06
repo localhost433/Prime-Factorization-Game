@@ -15,44 +15,38 @@
     <div class="side-buttons" role="toolbar" aria-label="Game Controls">
         <!-- Difficulty Switches -->
         <div class="switch">
-            <button id="beginnerSwitch" class="switch-toggle" role="switch"
-                aria-checked="false" aria-pressed="false"
+            <button id="beginnerSwitch" class="switch-toggle" role="switch" aria-checked="false" aria-pressed="false"
                 aria-labelledby="beginnerLabel" tabindex="0"></button>
             <span id="beginnerLabel" class="switch-label">Beginner</span>
         </div>
         <div class="switch">
-            <button id="easySwitch" class="switch-toggle" role="switch"
-                aria-checked="false" aria-pressed="false"
+            <button id="easySwitch" class="switch-toggle" role="switch" aria-checked="false" aria-pressed="false"
                 aria-labelledby="easyLabel" tabindex="0"></button>
             <span id="easyLabel" class="switch-label">Easy</span>
         </div>
         <div class="switch">
-            <button id="mediumSwitch" class="switch-toggle" role="switch"
-                aria-checked="false" aria-pressed="false"
+            <button id="mediumSwitch" class="switch-toggle" role="switch" aria-checked="false" aria-pressed="false"
                 aria-labelledby="mediumLabel" tabindex="0"></button>
             <span id="mediumLabel" class="switch-label">Medium</span>
         </div>
         <div class="switch">
-            <button id="hardSwitch" class="switch-toggle" role="switch"
-                aria-checked="false" aria-pressed="false"
+            <button id="hardSwitch" class="switch-toggle" role="switch" aria-checked="false" aria-pressed="false"
                 aria-labelledby="hardLabel" tabindex="0"></button>
             <span id="hardLabel" class="switch-label">Hard</span>
         </div>
         <div class="switch">
-            <button id="extremeSwitch" class="switch-toggle" role="switch"
-                aria-checked="false" aria-pressed="false"
+            <button id="extremeSwitch" class="switch-toggle" role="switch" aria-checked="false" aria-pressed="false"
                 aria-labelledby="extremeLabel" tabindex="0"></button>
             <span id="extremeLabel" class="switch-label">Extreme</span>
         </div>
         <!-- Dark Mode Switch -->
         <div class="switch">
-            <button id="darkModeSwitch" class="switch-toggle" role="switch"
-                aria-checked="false" aria-pressed="false"
+            <button id="darkModeSwitch" class="switch-toggle" role="switch" aria-checked="false" aria-pressed="false"
                 aria-labelledby="darkModeLabel" tabindex="0"></button>
             <span id="darkModeLabel" class="switch-label">Dark Mode</span>
         </div>
     </div>
-    
+
     <main>
         <!-- Game Container -->
         <div class="game-container">
@@ -97,7 +91,8 @@
             <h2>How to Play</h2>
             <p>Enter prime factors one at a time. Press Enter to confirm a composite, or leave the input blank and press
                 Enter if it's prime.</p>
-            <img src="howtoplay.gif" alt="Animated demonstration of factoring 54 into 2 times 3 cubed" style="width: 100%; max-width: 500px; margin-top: 10px;">
+            <img src="howtoplay.gif" alt="Animated demonstration of factoring 54 into 2 times 3 cubed"
+                style="width: 100%; max-width: 500px; margin-top: 10px;">
         </div>
     </div>
     <button id="showTutorial" class="button" style="position: absolute; top: 10px; right: 10px;">?</button>
@@ -110,7 +105,8 @@
         </p>
     </div>
 
-    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@latest"></script>
+    <script type="module" src="src/utils/supabase.js"></script>
     <script type="module" src="src/index.js"></script>
 </body>
 

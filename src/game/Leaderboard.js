@@ -1,89 +1,87 @@
-// src/game/Leaderboard.js
+import { supabase } from '../utils/supabase.js';
 
 export class Leaderboard {
     constructor(gameInstance) {
         this.game = gameInstance;
         this.list = document.getElementById('leaderboardItems');
+        if (!this.list) {
+            console.warn('Leaderboard element with id "leaderboardItems" not found.');
+        }
     }
 
     getCurrentKey() {
         return this.game.state.currentDifficulty || 'easy';
     }
 
-    recordTime(rawTime) {
+    async recordTime(rawTime) {
         const difficulty = this.getCurrentKey();
-        const uid = this.game.state.userId;
-        if (!uid) return;
+        const user_id = this.game.state.userId;
+        if (!user_id) return;
 
-        const username = localStorage.getItem('username') || 'Anonymous';
-        const allTimes = JSON.parse(localStorage.getItem('bestTimes') || '{}');
-        if (!allTimes[difficulty]) allTimes[difficulty] = {};
+        const name = localStorage.getItem('username') || 'Anonymous';
+        const best_time = parseFloat(rawTime.toFixed(2));
 
-        const finalTime = parseFloat(rawTime.toFixed(2));
-        let entry = allTimes[difficulty][uid];
-        if (!entry) {
-            entry = { name: username, best: finalTime };
-        } else {
-            const prev = Number(entry.best);
-            if (isNaN(prev) || finalTime < prev) {
-                entry.best = finalTime;
-            }
-            entry.name = username;
-        }
-
-        allTimes[difficulty][uid] = entry;
-        localStorage.setItem('bestTimes', JSON.stringify(allTimes));
+        await supabase
+            .from('leaderboard')
+            .upsert(
+                { user_id, difficulty, name, best_time },
+                { onConflict: ['user_id', 'name'] }
+            );
     }
 
-    saveStreak() {
-        const uid = this.game.state.userId;
-        if (!uid) return;
+    async saveStreak() {
         const difficulty = this.getCurrentKey();
-
-        const allBoards = JSON.parse(localStorage.getItem('leaderboard') || '{}');
-        if (!allBoards[difficulty]) allBoards[difficulty] = {};
+        const user_id = this.game.state.userId;
+        if (!user_id) return;
 
         const name = localStorage.getItem('username') || 'Anonymous';
         const streak = this.game.state.streaks?.[difficulty] || 0;
-        const prev = allBoards[difficulty][uid]?.streak ?? 0;
 
-        if (streak > prev) {
-            allBoards[difficulty][uid] = { name, streak };
-        } else if (allBoards[difficulty][uid] && allBoards[difficulty][uid].name !== name) {
-            allBoards[difficulty][uid].name = name;
-        } else {
+        await supabase
+            .from('leaderboard')
+            .upsert(
+                { user_id, difficulty, name, streak },
+                { onConflict: ['user_id', 'name'] }
+            );
+    }
+
+    async render() {
+        const difficulty = this.getCurrentKey();
+        const { data, error } = await supabase
+            .from('leaderboard')
+            .select('name, streak, best_time')
+            .eq('difficulty', difficulty)
+            .order('streak', { ascending: false })
+            .limit(5);
+
+        if (error) {
+            console.error('Error loading leaderboard:', error);
             return;
         }
 
-        localStorage.setItem('leaderboard', JSON.stringify(allBoards));
-        this.render();
+        if (this.list) {
+            this.list.innerHTML = data
+                .map(e =>
+                    `<li>${this.escape(e.name)}: ${e.streak} (Best Time: ${e.best_time?.toFixed(2) ?? '—'})</li>`
+                )
+                .join('');
+        }
     }
 
-    render() {
+    async getBestStreak(userId) {
         const difficulty = this.getCurrentKey();
-        const streaks = JSON.parse(localStorage.getItem('leaderboard') || '{}')[difficulty] || {};
-        const bestTimes = JSON.parse(localStorage.getItem('bestTimes') || '{}')[difficulty] || {};
+        const { data, error } = await supabase
+            .from('leaderboard')
+            .select('streak')
+            .eq('user_id', userId)
+            .eq('difficulty', difficulty)
+            .single();
 
-        const allIds = new Set([...Object.keys(streaks), ...Object.keys(bestTimes)]);
-
-        const entries = [...allIds].map(id => {
-            const s = streaks[id] ?? { name: bestTimes[id]?.name ?? 'Anonymous', streak: 0 };
-            const t = bestTimes[id] ?? { name: s.name, best: '—' };
-            const time = typeof t.best === 'number' ? t.best.toFixed(2) : t.best;
-            return { name: s.name, streak: s.streak, time };
-        })
-            .sort((a, b) => b.streak - a.streak)
-            .slice(0, 5);
-
-        this.list.innerHTML = entries.map(e =>
-            `<li>${this.escape(e.name)}: ${e.streak} (Best Time: ${e.time})</li>`
-        ).join('');
-    }
-
-    getBestStreak(userId) {
-        const difficulty = this.getCurrentKey();
-        const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '{}');
-        return leaderboard[difficulty]?.[userId]?.streak ?? 0;
+        if (error) {
+            console.error('Error fetching best streak:', error);
+            return 0;
+        }
+        return data?.streak ?? 0;
     }
 
     escape(str) {
